@@ -1,7 +1,6 @@
 package com.fmeyer.drawmyshit;
 
 import android.app.DialogFragment;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +9,6 @@ import android.widget.Button;
 
 import com.larswerkman.holocolorpicker.ColorPicker;
 import com.larswerkman.holocolorpicker.SVBar;
-import com.larswerkman.holocolorpicker.SaturationBar;
 
 /**
  * Created by fmeyer on 11/8/14.
