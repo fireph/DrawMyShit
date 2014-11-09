@@ -1,0 +1,3 @@
+[submodule "app/libs/HoloColorPicker"]
+	path = app/libs/HoloColorPicker
+	url = https://github.com/LarsWerkman/HoloColorPicker
