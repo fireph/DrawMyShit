@@ -1,6 +1,5 @@
 package com.fmeyer.drawmyshit;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,6 +10,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -19,6 +20,9 @@ import java.util.List;
 public class MainDrawingView extends View {
     int mColor = Color.BLACK;
 
+    int mViewWidth = 1;
+    int mViewHeight = 1;
+
     OnLineListener mLineListener = null;
 
     public class Stroke {
@@ -26,9 +30,15 @@ public class MainDrawingView extends View {
         public Paint paint;
     }
 
-    List<Stroke> allStrokes = new ArrayList<Stroke>();
+    List<Stroke> myStrokes = new ArrayList<Stroke>();
 
-    private void newStroke(int color) {
+    HashMap<String, List<Stroke>> otherStrokes = new HashMap<String, List<Stroke>>();
+
+    private Stroke newStroke(int color) {
+        return newStroke(color, null);
+    }
+
+    private Stroke newStroke(int color, String id) {
         Stroke s = new Stroke();
         s.paint = new Paint();
         s.path = new Path();
@@ -38,7 +48,19 @@ public class MainDrawingView extends View {
         s.paint.setStyle(Paint.Style.STROKE);
         s.paint.setStrokeJoin(Paint.Join.ROUND);
 
-        allStrokes.add(s);
+        if (id == null) {
+            myStrokes.add(s);
+        } else {
+            if (otherStrokes.containsKey(id)) {
+                otherStrokes.get(id).add(s);
+            } else {
+                List<Stroke> otherStrokeList = new ArrayList<Stroke>();
+                otherStrokeList.add(s);
+                otherStrokes.put(id, otherStrokeList);
+            }
+        }
+
+        return s;
     }
 
     public MainDrawingView(Context context, AttributeSet attrs) {
@@ -50,7 +72,7 @@ public class MainDrawingView extends View {
     public interface OnLineListener{
         public void onLineTo(float x, float y, Paint paint);
         public void onMoveTo(float x, float y, Paint paint);
-        public void onWipe();
+        public void onErase();
     }
 
     public void onLine(OnLineListener listener) {
@@ -58,25 +80,52 @@ public class MainDrawingView extends View {
     }
 
     public void setColor(int color) {
+        setColor(color, null);
+    }
+
+    public void setColor(int color, String id) {
         mColor = color;
-        newStroke(mColor);
+        newStroke(mColor, id);
         invalidate();
     }
 
-    public void erase() {
-        allStrokes.clear();
+    public void erase(boolean emit) {
+        myStrokes.clear();
+        otherStrokes.clear();
         newStroke(mColor);
-        invalidate();
-        mLineListener.onWipe();
+        this.post(new Runnable() {
+            @Override
+            public void run() {
+                invalidate();
+            }
+        });
+        if (emit) {
+            mLineListener.onErase();
+        }
     }
 
-    public void lineTo(float x, float y, int color) {
-        Stroke s = allStrokes.get(allStrokes.size()-1);
+    public void lineTo(float x, float y, int color, String id) {
+        float realX = x*mViewWidth;
+        float realY = y*mViewHeight;
+        Stroke s;
+        if (id == null) {
+            s = myStrokes.get(myStrokes.size()-1);
+        } else {
+            if (otherStrokes.containsKey(id)) {
+                List<Stroke> otherStrokeList = otherStrokes.get(id);
+                s = otherStrokeList.get(otherStrokeList.size()-1);
+            } else {
+                List<Stroke> otherStrokeList = new ArrayList<Stroke>();
+                otherStrokes.put(id, otherStrokeList);
+                newStroke(color, id);
+                s = otherStrokeList.get(otherStrokeList.size()-1);
+            }
+        }
         int oldColor = s.paint.getColor();
         if (oldColor != color) {
-            newStroke(color);
+            s = newStroke(color, id);
         }
-        s.path.lineTo(x, y);
+        s.path.lineTo(realX, realY);
         this.post(new Runnable() {
             @Override
             public void run() {
@@ -85,13 +134,28 @@ public class MainDrawingView extends View {
         });
     }
 
-    public void moveTo(float x, float y, int color) {
-        Stroke s = allStrokes.get(allStrokes.size()-1);
+    public void moveTo(float x, float y, int color, String id) {
+        float realX = x*mViewWidth;
+        float realY = y*mViewHeight;
+        Stroke s;
+        if (id == null) {
+            s = myStrokes.get(myStrokes.size()-1);
+        } else {
+            if (otherStrokes.containsKey(id)) {
+                List<Stroke> otherStrokeList = otherStrokes.get(id);
+                s = otherStrokeList.get(otherStrokeList.size()-1);
+            } else {
+                List<Stroke> otherStrokeList = new ArrayList<Stroke>();
+                otherStrokes.put(id, otherStrokeList);
+                newStroke(color, id);
+                s = otherStrokeList.get(otherStrokeList.size()-1);
+            }
+        }
         int oldColor = s.paint.getColor();
         if (oldColor != color) {
-            newStroke(color);
+            s = newStroke(color, id);
         }
-        s.path.moveTo(x, y);
+        s.path.moveTo(realX, realY);
         this.post(new Runnable() {
             @Override
             public void run() {
@@ -101,9 +165,21 @@ public class MainDrawingView extends View {
     }
 
     @Override
+    protected void onSizeChanged(int xNew, int yNew, int xOld, int yOld){
+        super.onSizeChanged(xNew, yNew, xOld, yOld);
+        mViewWidth = xNew;
+        mViewHeight = yNew;
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
-        for (Stroke s : allStrokes) {
+        for (Stroke s : myStrokes) {
             canvas.drawPath(s.path, s.paint);
+        }
+        for (List<Stroke> sList : otherStrokes.values()) {
+            for (Stroke s : sList) {
+                canvas.drawPath(s.path, s.paint);
+            }
         }
     }
 
@@ -113,7 +189,7 @@ public class MainDrawingView extends View {
         float eventX = event.getX();
         float eventY = event.getY();
 
-        Stroke s = allStrokes.get(allStrokes.size()-1);
+        Stroke s = myStrokes.get(myStrokes.size()-1);
 
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN:
@@ -122,13 +198,13 @@ public class MainDrawingView extends View {
 //                s.path.lineTo(eventX+2, eventY);
                 s.path.moveTo(eventX, eventY);
                 if (mLineListener != null) {
-                    mLineListener.onMoveTo(eventX, eventY, s.paint);
+                    mLineListener.onMoveTo(eventX/mViewWidth, eventY/mViewHeight, s.paint);
                 }
             case MotionEvent.ACTION_MOVE:
                 // Connect the points
                 s.path.lineTo(eventX, eventY);
                 if (mLineListener != null) {
-                    mLineListener.onLineTo(eventX, eventY, s.paint);
+                    mLineListener.onLineTo(eventX/mViewWidth, eventY/mViewHeight, s.paint);
                 }
 
 //            default:

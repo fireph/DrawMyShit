@@ -5,7 +5,6 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -64,6 +63,14 @@ public class DrawFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_draw, container, false);
 
+        Socket socket = null;
+
+        try {
+            socket = IO.socket("http://drawmyshit.ngrok.com");
+        } catch (URISyntaxException e) {
+            Log.d("SOCKET.IO", "This shit did not work!!!");
+        }
+
         drawingView = (MainDrawingView) rootView.findViewById(R.id.single_touch_view);
         drawingView.setColor(currentColor);
         colorPickerButton = (ImageButton) rootView.findViewById(R.id.color_picker_button);
@@ -78,17 +85,9 @@ public class DrawFragment extends Fragment {
         eraseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                drawingView.erase();
+                drawingView.erase(true);
             }
         });
-
-        Socket socket = null;
-
-        try {
-            socket = IO.socket("http://drawmyshit.ngrok.com");
-        } catch (URISyntaxException e) {
-            Log.d("SOCKET.IO", "This shit did not work!!!");
-        }
 
         if (socket != null) {
             final Socket nSocket = socket;
@@ -102,14 +101,16 @@ public class DrawFragment extends Fragment {
                     float x = 0;
                     float y = 0;
                     int color = 0;
+                    String id = null;
                     try {
+                        id = (String) obj.getString("id");
                         x = (float) obj.getDouble("x");
                         y = (float) obj.getDouble("y");
                         color = (int) obj.getDouble("color");
                     } catch(JSONException e) {
                         Log.d("JSON", "Could not get JSON object for lineTo");
                     }
-                    drawingView.lineTo(x, y, color);
+                    drawingView.lineTo(x, y, color, id);
                 }
             }).on("moveTo", new Emitter.Listener() {
                 @Override
@@ -118,14 +119,21 @@ public class DrawFragment extends Fragment {
                     float x = 0;
                     float y = 0;
                     int color = 0;
+                    String id = null;
                     try {
+                        id = (String) obj.getString("id");
                         x = (float) obj.getDouble("x");
                         y = (float) obj.getDouble("y");
                         color = (int) obj.getDouble("color");
                     } catch(JSONException e) {
                         Log.d("JSON", "Could not get JSON object for moveTo");
                     }
-                    drawingView.moveTo(x, y, color);
+                    drawingView.moveTo(x, y, color, id);
+                }
+            }).on("erase", new Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    drawingView.erase(false);
                 }
             }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
                 @Override
@@ -157,12 +165,12 @@ public class DrawFragment extends Fragment {
                     } catch(JSONException e) {
                         Log.d("JSON", "Could not set JSON object for moveTo");
                     }
-                    nSocket.emit("lineTo", pathData);
+                    nSocket.emit("moveTo", pathData);
                 }
 
                 @Override
-                public void onWipe() {
-                    nSocket.emit("wipe");
+                public void onErase() {
+                    nSocket.emit("erase");
                 }
             });
         }
