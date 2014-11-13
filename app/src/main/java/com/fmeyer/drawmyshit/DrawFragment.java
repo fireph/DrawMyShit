@@ -17,6 +17,9 @@ import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.URISyntaxException;
 
 /**
@@ -103,10 +106,31 @@ public class DrawFragment extends Fragment {
 
             });
             nSocket.connect();
-            drawingView.onLineAdded(new MainDrawingView.OnLineAddedListener() {
+            drawingView.onLine(new MainDrawingView.OnLineListener() {
                 @Override
-                public void onLine(Path path, Paint paint) {
-//                    nSocket.emit("line", path.);
+                public void onLineTo(float x, float y, Paint paint) {
+                    JSONObject pathData = new JSONObject();
+                    try {
+                        pathData.put("x", (double) x);
+                        pathData.put("y", (double) y);
+                        pathData.put("color", paint.getColor());
+                    } catch(JSONException e) {
+                        Log.d("JSON", "Could not set JSON object for lineTo");
+                    }
+                    nSocket.emit("lineTo", pathData);
+                }
+
+                @Override
+                public void onMoveTo(float x, float y, Paint paint) {
+                    JSONObject pathData = new JSONObject();
+                    try {
+                        pathData.put("x", (double) x);
+                        pathData.put("y", (double) y);
+                        pathData.put("color", paint.getColor());
+                    } catch(JSONException e) {
+                        Log.d("JSON", "Could not set JSON object for moveTo");
+                    }
+                    nSocket.emit("lineTo", pathData);
                 }
             });
         }
