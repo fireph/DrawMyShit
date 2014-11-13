@@ -66,7 +66,7 @@ public class DrawFragment extends Fragment {
         Socket socket = null;
 
         try {
-            socket = IO.socket("http://drawmyshit.ngrok.com");
+            socket = IO.socket("http://drawmyshit.herokuapp.com");
         } catch (URISyntaxException e) {
             Log.d("SOCKET.IO", "This shit did not work!!!");
         }
