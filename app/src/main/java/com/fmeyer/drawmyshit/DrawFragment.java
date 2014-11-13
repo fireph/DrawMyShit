@@ -85,7 +85,7 @@ public class DrawFragment extends Fragment {
         Socket socket = null;
 
         try {
-            socket = IO.socket("http://9dfdd45.ngrok.com");
+            socket = IO.socket("http://drawmyshit.ngrok.com");
         } catch (URISyntaxException e) {
             Log.d("SOCKET.IO", "This shit did not work!!!");
         }
@@ -93,15 +93,44 @@ public class DrawFragment extends Fragment {
         if (socket != null) {
             final Socket nSocket = socket;
             nSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
-
                 @Override
                 public void call(Object... args) {}
-
+            }).on("lineTo", new Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    JSONObject obj = (JSONObject)args[0];
+                    float x = 0;
+                    float y = 0;
+                    int color = 0;
+                    try {
+                        x = (float) obj.getDouble("x");
+                        y = (float) obj.getDouble("y");
+                        color = (int) obj.getDouble("color");
+                    } catch(JSONException e) {
+                        Log.d("JSON", "Could not get JSON object for lineTo");
+                    }
+                    drawingView.lineTo(x, y, color);
+                }
+            }).on("moveTo", new Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    JSONObject obj = (JSONObject)args[0];
+                    float x = 0;
+                    float y = 0;
+                    int color = 0;
+                    try {
+                        x = (float) obj.getDouble("x");
+                        y = (float) obj.getDouble("y");
+                        color = (int) obj.getDouble("color");
+                    } catch(JSONException e) {
+                        Log.d("JSON", "Could not get JSON object for moveTo");
+                    }
+                    drawingView.moveTo(x, y, color);
+                }
             }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
-
                 @Override
-                public void call(Object... args) {}
-
+                public void call(Object... args) {
+                }
             });
             nSocket.connect();
             drawingView.onLine(new MainDrawingView.OnLineListener() {

@@ -1,5 +1,6 @@
 package com.fmeyer.drawmyshit;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -66,6 +67,37 @@ public class MainDrawingView extends View {
         allStrokes.clear();
         newStroke(mColor);
         invalidate();
+        mLineListener.onWipe();
+    }
+
+    public void lineTo(float x, float y, int color) {
+        Stroke s = allStrokes.get(allStrokes.size()-1);
+        int oldColor = s.paint.getColor();
+        if (oldColor != color) {
+            newStroke(color);
+        }
+        s.path.lineTo(x, y);
+        this.post(new Runnable() {
+            @Override
+            public void run() {
+                invalidate();
+            }
+        });
+    }
+
+    public void moveTo(float x, float y, int color) {
+        Stroke s = allStrokes.get(allStrokes.size()-1);
+        int oldColor = s.paint.getColor();
+        if (oldColor != color) {
+            newStroke(color);
+        }
+        s.path.moveTo(x, y);
+        this.post(new Runnable() {
+            @Override
+            public void run() {
+                invalidate();
+            }
+        });
     }
 
     @Override
