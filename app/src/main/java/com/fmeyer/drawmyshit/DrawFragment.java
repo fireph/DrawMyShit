@@ -4,13 +4,20 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
-import com.larswerkman.holocolorpicker.ColorPicker;
+import com.github.nkzawa.emitter.Emitter;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
+
+import java.net.URISyntaxException;
 
 /**
  * Created by fmeyer on 11/8/14.
@@ -71,6 +78,39 @@ public class DrawFragment extends Fragment {
                 drawingView.erase();
             }
         });
+
+        Socket socket = null;
+
+        try {
+            socket = IO.socket("http://9dfdd45.ngrok.com");
+        } catch (URISyntaxException e) {
+            Log.d("SOCKET.IO", "This shit did not work!!!");
+        }
+
+        if (socket != null) {
+            final Socket nSocket = socket;
+            nSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
+
+                @Override
+                public void call(Object... args) {
+                    nSocket.emit("test", "hi");
+                }
+
+            }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+
+                @Override
+                public void call(Object... args) {}
+
+            });
+            nSocket.connect();
+            drawingView.onLineAdded(new MainDrawingView.OnLineAddedListener() {
+                @Override
+                public void onLine(Path path, Paint paint) {
+//                    nSocket.emit("line", path.);
+                }
+            });
+        }
+
         return rootView;
     }
 }

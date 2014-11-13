@@ -21,5 +21,6 @@ android {
 
 dependencies {
     compile 'com.larswerkman:HoloColorPicker:1.4'
+    compile 'com.github.nkzawa:socket.io-client:0.3.0'
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

@@ -18,6 +18,8 @@ import java.util.List;
 public class MainDrawingView extends View {
     int mColor = Color.BLACK;
 
+    OnLineAddedListener mLineAddedListener = null;
+
     public class Stroke {
         public Path path;
         public Paint paint;
@@ -36,12 +38,24 @@ public class MainDrawingView extends View {
         s.paint.setStrokeJoin(Paint.Join.ROUND);
 
         allStrokes.add(s);
+
+        if (mLineAddedListener != null) {
+            mLineAddedListener.onLine(s.path, s.paint);
+        }
     }
 
     public MainDrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         newStroke(mColor);
+    }
+
+    public interface OnLineAddedListener{
+        public void onLine(Path path, Paint paint);
+    }
+
+    public void onLineAdded(OnLineAddedListener listener) {
+        mLineAddedListener = listener;
     }
 
     public void setColor(int color) {
@@ -74,6 +88,8 @@ public class MainDrawingView extends View {
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 // Set a new starting point
+                s.path.moveTo(eventX-2, eventY);
+                s.path.lineTo(eventX+2, eventY);
                 s.path.moveTo(eventX, eventY);
             case MotionEvent.ACTION_MOVE:
                 // Connect the points
