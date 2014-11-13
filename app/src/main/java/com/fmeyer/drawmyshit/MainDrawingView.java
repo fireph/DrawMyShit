@@ -49,6 +49,7 @@ public class MainDrawingView extends View {
     public interface OnLineListener{
         public void onLineTo(float x, float y, Paint paint);
         public void onMoveTo(float x, float y, Paint paint);
+        public void onWipe();
     }
 
     public void onLine(OnLineListener listener) {

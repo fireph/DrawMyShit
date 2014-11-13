@@ -95,9 +95,7 @@ public class DrawFragment extends Fragment {
             nSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 
                 @Override
-                public void call(Object... args) {
-                    nSocket.emit("test", "hi");
-                }
+                public void call(Object... args) {}
 
             }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
@@ -131,6 +129,11 @@ public class DrawFragment extends Fragment {
                         Log.d("JSON", "Could not set JSON object for moveTo");
                     }
                     nSocket.emit("lineTo", pathData);
+                }
+
+                @Override
+                public void onWipe() {
+                    nSocket.emit("wipe");
                 }
             });
         }
