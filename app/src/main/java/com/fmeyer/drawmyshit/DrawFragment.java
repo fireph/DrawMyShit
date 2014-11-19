@@ -16,6 +16,7 @@ import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -97,17 +98,17 @@ public class DrawFragment extends Fragment {
             }).on("lineTo", new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
-                    JSONObject obj = (JSONObject)args[0];
+                    JSONObject obj = (JSONObject) args[0];
                     float x = 0;
                     float y = 0;
                     int color = 0;
                     String id = null;
                     try {
-                        id = (String) obj.getString("id");
+                        id = obj.getString("id");
                         x = (float) obj.getDouble("x");
                         y = (float) obj.getDouble("y");
                         color = (int) obj.getDouble("color");
-                    } catch(JSONException e) {
+                    } catch (JSONException e) {
                         Log.d("JSON", "Could not get JSON object for lineTo");
                     }
                     drawingView.lineTo(x, y, color, id);
@@ -121,7 +122,7 @@ public class DrawFragment extends Fragment {
                     int color = 0;
                     String id = null;
                     try {
-                        id = (String) obj.getString("id");
+                        id = obj.getString("id");
                         x = (float) obj.getDouble("x");
                         y = (float) obj.getDouble("y");
                         color = (int) obj.getDouble("color");
@@ -129,6 +130,35 @@ public class DrawFragment extends Fragment {
                         Log.d("JSON", "Could not get JSON object for moveTo");
                     }
                     drawingView.moveTo(x, y, color, id);
+                }
+            }).on("batch", new Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    JSONArray arr = (JSONArray)args[0];
+                    try {
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONArray arr2 = (JSONArray) arr.get(i);
+                            String msgType = (String) arr2.get(0);
+                            JSONObject obj = (JSONObject) arr2.get(1);
+                            if (msgType.equals("lineTo")) {
+                                drawingView.lineTo(
+                                        (float) obj.getDouble("x"),
+                                        (float) obj.getDouble("y"),
+                                        (int) obj.getDouble("color"),
+                                        obj.getString("id"));
+                            } else if (msgType.equals("moveTo")) {
+                                drawingView.moveTo(
+                                        (float) obj.getDouble("x"),
+                                        (float) obj.getDouble("y"),
+                                        (int) obj.getDouble("color"),
+                                        obj.getString("id"));
+                            } else {
+                                Log.d("MSG", "Invalid msg type");
+                            }
+                        }
+                    } catch(JSONException e) {
+                        Log.d("JSON", "Could not get JSON object for batch");
+                    }
                 }
             }).on("erase", new Emitter.Listener() {
                 @Override
