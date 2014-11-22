@@ -11,8 +11,12 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".DrawActivity"
-            android:label="@string/app_name" >
+            android:name="com.fmeyer.drawmyshit.DrawActivity"
+            android:label="@string/title_activity_draw" >
+        </activity>
+        <activity
+            android:name="com.fmeyer.drawmyshit.RoomActivity"
+            android:label="@string/title_activity_room" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

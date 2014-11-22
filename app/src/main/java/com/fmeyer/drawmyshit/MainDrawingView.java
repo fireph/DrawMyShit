@@ -14,9 +14,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by fmeyer on 11/8/14.
- */
 public class MainDrawingView extends View {
     int mColor = Color.BLACK;
 

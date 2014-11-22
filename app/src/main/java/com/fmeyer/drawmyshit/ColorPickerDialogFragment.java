@@ -10,9 +10,6 @@ import android.widget.Button;
 import com.larswerkman.holocolorpicker.ColorPicker;
 import com.larswerkman.holocolorpicker.SVBar;
 
-/**
- * Created by fmeyer on 11/8/14.
- */
 public class ColorPickerDialogFragment extends DialogFragment {
     int mColor;
     OnDialogColorChangedListener colorListener;

@@ -22,9 +22,6 @@ import org.json.JSONObject;
 
 import java.net.URISyntaxException;
 
-/**
- * Created by fmeyer on 11/8/14.
- */
 public class DrawFragment extends Fragment {
     MainDrawingView drawingView;
     ImageButton colorPickerButton;
