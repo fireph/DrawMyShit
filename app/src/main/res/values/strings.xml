@@ -3,8 +3,7 @@
 
     <string name="app_name">DrawMyShit</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_draw">DrawActivity</string>
-    <string name="title_activity_room">RoomActivity</string>
+    <string name="title_activity_draw">Draw that shit!</string>
     <string name="go_to_room">Go to Room</string>
     <string name="server_address">https://drawmyshit.herokuapp.com</string>
 
