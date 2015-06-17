@@ -27,6 +27,8 @@ public class DrawFragment extends Fragment {
     ImageButton colorPickerButton;
     ImageButton eraseButton;
 
+    private Socket mSocket;
+
     int currentColor = Color.BLUE;
 
     void showDialog(int color) {
@@ -61,14 +63,6 @@ public class DrawFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_draw, container, false);
 
-        Socket socket = null;
-
-        try {
-            socket = IO.socket("http://drawmyshit.herokuapp.com");
-        } catch (URISyntaxException e) {
-            Log.d("SOCKET.IO", "This shit did not work!!!");
-        }
-
         drawingView = (MainDrawingView) rootView.findViewById(R.id.single_touch_view);
         drawingView.setColor(currentColor);
         colorPickerButton = (ImageButton) rootView.findViewById(R.id.color_picker_button);
@@ -87,8 +81,30 @@ public class DrawFragment extends Fragment {
             }
         });
 
-        if (socket != null) {
-            final Socket nSocket = socket;
+        return rootView;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mSocket.disconnect();
+        mSocket = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mSocket == null) {
+            try {
+                mSocket = IO.socket(getResources().getString(R.string.server_address));
+            } catch (URISyntaxException e) {
+                Log.d("SOCKET.IO", "This shit did not work!!!");
+            }
+        }
+
+        final String roomName = getArguments().getString("room_name");
+        if (mSocket != null) {
+            final Socket nSocket = mSocket;
             nSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {}
@@ -168,11 +184,14 @@ public class DrawFragment extends Fragment {
                 }
             });
             nSocket.connect();
+            nSocket.emit("joinRoom", roomName);
+            nSocket.emit("getData");
             drawingView.onLine(new MainDrawingView.OnLineListener() {
                 @Override
                 public void onLineTo(float x, float y, Paint paint) {
                     JSONObject pathData = new JSONObject();
                     try {
+                        pathData.put("room", roomName);
                         pathData.put("type", "lineTo");
                         pathData.put("x", (double) x);
                         pathData.put("y", (double) y);
@@ -187,6 +206,7 @@ public class DrawFragment extends Fragment {
                 public void onMoveTo(float x, float y, Paint paint) {
                     JSONObject pathData = new JSONObject();
                     try {
+                        pathData.put("room", roomName);
                         pathData.put("type", "moveTo");
                         pathData.put("x", (double) x);
                         pathData.put("y", (double) y);
@@ -199,11 +219,9 @@ public class DrawFragment extends Fragment {
 
                 @Override
                 public void onErase() {
-                    nSocket.emit("erase");
+                    nSocket.emit("erase", roomName);
                 }
             });
         }
-
-        return rootView;
     }
 }

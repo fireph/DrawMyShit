@@ -11,13 +11,18 @@ public class DrawActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_draw);
+        Bundle extras = getIntent().getExtras();
+        String roomName = extras.getString("room_name");
+        DrawFragment frag = new DrawFragment();
+        Bundle bundle = new Bundle();
+        bundle.putString("room_name", roomName);
+        frag.setArguments(bundle);
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
-                    .add(R.id.container, new DrawFragment())
+                    .add(R.id.container, frag)
                     .commit();
         }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
