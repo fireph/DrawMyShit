@@ -1,0 +1,6 @@
+[submodule "app/libs/HoloColorPicker"]
+	path = app/libs/HoloColorPicker
+	url = https://github.com/LarsWerkman/HoloColorPicker.git
+[submodule "app/libs/socket.io-client.java"]
+	path = app/libs/socket.io-client.java
+	url = https://github.com/nkzawa/socket.io-client.java.git
