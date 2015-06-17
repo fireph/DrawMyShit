@@ -173,6 +173,7 @@ public class DrawFragment extends Fragment {
                 public void onLineTo(float x, float y, Paint paint) {
                     JSONObject pathData = new JSONObject();
                     try {
+                        pathData.put("type", "lineTo");
                         pathData.put("x", (double) x);
                         pathData.put("y", (double) y);
                         pathData.put("color", paint.getColor());
@@ -186,6 +187,7 @@ public class DrawFragment extends Fragment {
                 public void onMoveTo(float x, float y, Paint paint) {
                     JSONObject pathData = new JSONObject();
                     try {
+                        pathData.put("type", "moveTo");
                         pathData.put("x", (double) x);
                         pathData.put("y", (double) y);
                         pathData.put("color", paint.getColor());

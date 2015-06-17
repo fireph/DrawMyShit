@@ -6,5 +6,6 @@
     <string name="title_activity_draw">DrawActivity</string>
     <string name="title_activity_room">RoomActivity</string>
     <string name="go_to_room">Go to Room</string>
+    <string name="server_address">http://drawmyshit.herokuapp.com</string>
 
 </resources>
