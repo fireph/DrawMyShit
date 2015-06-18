@@ -3,14 +3,19 @@ package com.fmeyer.drawmyshit;
 import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
+import android.widget.ToggleButton;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
@@ -21,13 +26,25 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DrawFragment extends Fragment {
+
+    private static final int DRAW_ITEMS_TO_CONSUME = 10;
+    private static final String PREFERENCES_FILE = "DRAWMYSHIT_PREFERENCES";
+
     MainDrawingView drawingView;
     ImageButton colorPickerButton;
     ImageButton eraseButton;
+    ImageButton refreshButton;
+    ToggleButton toggleButton;
 
     private Socket mSocket;
+    private final Handler handler = new Handler();
+    private static Runnable drawingRunnable;
+    private boolean mCurrentlyDrawing = false;
+    private ConcurrentLinkedQueue<JSONArray> mDrawingQueue = new ConcurrentLinkedQueue<JSONArray>();
+    private boolean animationsEnabled = true;
 
     int currentColor = Color.BLUE;
 
@@ -63,6 +80,10 @@ public class DrawFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_draw, container, false);
 
+        final SharedPreferences settings = getActivity().getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
+        final SharedPreferences.Editor editor = settings.edit();
+        animationsEnabled = settings.getBoolean("animations", true);
+
         drawingView = (MainDrawingView) rootView.findViewById(R.id.single_touch_view);
         drawingView.setColor(currentColor);
         colorPickerButton = (ImageButton) rootView.findViewById(R.id.color_picker_button);
@@ -81,7 +102,75 @@ public class DrawFragment extends Fragment {
             }
         });
 
+        refreshButton = (ImageButton) rootView.findViewById(R.id.refresh_button);
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDrawingQueue.clear();
+                drawingView.erase(false);
+                if (mSocket != null) {
+                    mSocket.emit("getData");
+                }
+            }
+        });
+
+        toggleButton = (ToggleButton) rootView.findViewById(R.id.animation_switch);
+        toggleButton.setChecked(animationsEnabled);
+        toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                animationsEnabled = isChecked;
+                editor.putBoolean("animations", animationsEnabled);
+                editor.apply();
+            }
+        });
+
+        drawingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                mCurrentlyDrawing = true;
+                try {
+                    int i = DRAW_ITEMS_TO_CONSUME;
+                    while ((animationsEnabled && i > 0 && !mDrawingQueue.isEmpty()) ||
+                            (!animationsEnabled && !mDrawingQueue.isEmpty())) {
+                        if (!mDrawingQueue.isEmpty()) {
+                            drawSegment(mDrawingQueue.remove());
+                        }
+                        if (mDrawingQueue.isEmpty()) {
+                            mCurrentlyDrawing = false;
+                        }
+                        i--;
+                    }
+                    if (mCurrentlyDrawing) {
+                        handler.post(drawingRunnable);
+                    }
+                } catch(JSONException e){
+                    Log.d("JSON", "Could not get JSON object for consuming");
+                }
+            }
+        };
+
         return rootView;
+    }
+
+    public void drawSegment(JSONArray item) throws JSONException {
+        String msgType = (String) item.get(0);
+        JSONObject obj = (JSONObject) item.get(1);
+        if (msgType.equals("lineTo")) {
+            drawingView.lineTo(
+                    (float) obj.getDouble("x"),
+                    (float) obj.getDouble("y"),
+                    (int) obj.getDouble("color"),
+                    obj.getString("id"));
+        } else if (msgType.equals("moveTo")) {
+            drawingView.moveTo(
+                    (float) obj.getDouble("x"),
+                    (float) obj.getDouble("y"),
+                    (int) obj.getDouble("color"),
+                    obj.getString("id"));
+        } else {
+            Log.d("MSG", "Invalid msg type");
+        }
     }
 
     @Override
@@ -111,38 +200,32 @@ public class DrawFragment extends Fragment {
             }).on("lineTo", new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
-                    JSONObject obj = (JSONObject) args[0];
-                    float x = 0;
-                    float y = 0;
-                    int color = 0;
-                    String id = null;
+                    JSONArray arr = new JSONArray();
                     try {
-                        id = obj.getString("id");
-                        x = (float) obj.getDouble("x");
-                        y = (float) obj.getDouble("y");
-                        color = (int) obj.getDouble("color");
+                        arr.put(0, "lineTo");
+                        arr.put(1, (JSONObject) args[0]);
                     } catch (JSONException e) {
                         Log.d("JSON", "Could not get JSON object for lineTo");
                     }
-                    drawingView.lineTo(x, y, color, id);
+                    mDrawingQueue.add(arr);
+                    if (!mCurrentlyDrawing) {
+                        handler.post(drawingRunnable);
+                    }
                 }
             }).on("moveTo", new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
-                    JSONObject obj = (JSONObject)args[0];
-                    float x = 0;
-                    float y = 0;
-                    int color = 0;
-                    String id = null;
+                    JSONArray arr = new JSONArray();
                     try {
-                        id = obj.getString("id");
-                        x = (float) obj.getDouble("x");
-                        y = (float) obj.getDouble("y");
-                        color = (int) obj.getDouble("color");
+                        arr.put(0, "moveTo");
+                        arr.put(1, (JSONObject) args[0]);
                     } catch(JSONException e) {
                         Log.d("JSON", "Could not get JSON object for moveTo");
                     }
-                    drawingView.moveTo(x, y, color, id);
+                    mDrawingQueue.add(arr);
+                    if (!mCurrentlyDrawing) {
+                        handler.post(drawingRunnable);
+                    }
                 }
             }).on("batch", new Emitter.Listener() {
                 @Override
@@ -150,27 +233,13 @@ public class DrawFragment extends Fragment {
                     JSONArray arr = (JSONArray)args[0];
                     try {
                         for (int i = 0; i < arr.length(); i++) {
-                            JSONArray arr2 = (JSONArray) arr.get(i);
-                            String msgType = (String) arr2.get(0);
-                            JSONObject obj = (JSONObject) arr2.get(1);
-                            if (msgType.equals("lineTo")) {
-                                drawingView.lineTo(
-                                        (float) obj.getDouble("x"),
-                                        (float) obj.getDouble("y"),
-                                        (int) obj.getDouble("color"),
-                                        obj.getString("id"));
-                            } else if (msgType.equals("moveTo")) {
-                                drawingView.moveTo(
-                                        (float) obj.getDouble("x"),
-                                        (float) obj.getDouble("y"),
-                                        (int) obj.getDouble("color"),
-                                        obj.getString("id"));
-                            } else {
-                                Log.d("MSG", "Invalid msg type");
-                            }
+                            mDrawingQueue.add((JSONArray) arr.get(i));
+                        }
+                        if (!mCurrentlyDrawing) {
+                            handler.post(drawingRunnable);
                         }
                     } catch(JSONException e) {
-                        Log.d("JSON", "Could not get JSON object for batch");
+                        Log.d("JSON", "Could not get JSON object from batch");
                     }
                 }
             }).on("erase", new Emitter.Listener() {
@@ -196,7 +265,7 @@ public class DrawFragment extends Fragment {
                         pathData.put("x", (double) x);
                         pathData.put("y", (double) y);
                         pathData.put("color", paint.getColor());
-                    } catch(JSONException e) {
+                    } catch (JSONException e) {
                         Log.d("JSON", "Could not set JSON object for lineTo");
                     }
                     nSocket.emit("lineTo", pathData);
@@ -211,7 +280,7 @@ public class DrawFragment extends Fragment {
                         pathData.put("x", (double) x);
                         pathData.put("y", (double) y);
                         pathData.put("color", paint.getColor());
-                    } catch(JSONException e) {
+                    } catch (JSONException e) {
                         Log.d("JSON", "Could not set JSON object for moveTo");
                     }
                     nSocket.emit("moveTo", pathData);
