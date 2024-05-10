@@ -1,4 +1,4 @@
-package com.fmeyer.drawmyshit;
+package com.fmeyer.drawmystuff;
 
 import android.app.DialogFragment;
 import android.app.Fragment;
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class DrawFragment extends Fragment {
 
     private static final int DRAW_ITEMS_TO_CONSUME = 10;
-    private static final String PREFERENCES_FILE = "DRAWMYSHIT_PREFERENCES";
+    private static final String PREFERENCES_FILE = "DRAWMYSTUFF_PREFERENCES";
 
     MainDrawingView drawingView;
     ImageButton colorPickerButton;
@@ -187,7 +187,7 @@ public class DrawFragment extends Fragment {
             try {
                 mSocket = IO.socket(getResources().getString(R.string.server_address));
             } catch (URISyntaxException e) {
-                Log.d("SOCKET.IO", "This shit did not work!!!");
+                Log.d("SOCKET.IO", "This stuff did not work!!!");
             }
         }
 

@@ -1,4 +1,4 @@
-package com.fmeyer.drawmyshit;
+package com.fmeyer.drawmystuff;
 
 import android.app.Fragment;
 import android.content.Intent;

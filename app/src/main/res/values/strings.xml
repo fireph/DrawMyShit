@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">DrawMyShit</string>
+    <string name="app_name">DrawMyStuff</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_draw">Draw that shit!</string>
+    <string name="title_activity_draw">Draw that stuff!</string>
     <string name="go_to_room">Go to Room</string>
     <string name="animations">Animations</string>
     <string name="server_address">https://drawmyshit.herokuapp.com</string>

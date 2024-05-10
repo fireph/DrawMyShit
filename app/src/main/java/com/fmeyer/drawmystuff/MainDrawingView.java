@@ -1,4 +1,4 @@
-package com.fmeyer.drawmyshit;
+package com.fmeyer.drawmystuff;
 
 import android.content.Context;
 import android.graphics.Canvas;

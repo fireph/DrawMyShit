@@ -1,4 +1,4 @@
-package com.fmeyer.drawmyshit;
+package com.fmeyer.drawmystuff;
 
 import android.app.DialogFragment;
 import android.os.Bundle;

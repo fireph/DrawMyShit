@@ -10,10 +10,10 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.fmeyer.drawmyshit.DrawActivity" >
+            android:name="com.fmeyer.drawmystuff.DrawActivity" >
         </activity>
         <activity
-            android:name="com.fmeyer.drawmyshit.RoomActivity"
+            android:name="com.fmeyer.drawmystuff.RoomActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
