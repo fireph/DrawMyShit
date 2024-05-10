@@ -3,8 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/DrawMyShit.iml" filepath="$PROJECT_DIR$/DrawMyShit.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/DrawMyShit.app.unitTest.iml" />
     </modules>
   </component>
 </project>
-
